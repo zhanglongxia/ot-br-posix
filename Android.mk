@@ -28,6 +28,8 @@
 
 LOCAL_PATH := $(call my-dir)
 
+ifeq ($(OTBR_ENABLE_ANDROID_MK),1)
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_CLASS := STATIC_LIBRARIES
@@ -52,7 +54,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := \
     $(LOCAL_PATH)/src \
     $(LOCAL_PATH)/include \
 
-LOCAL_SHARED_LIBRARIES += libdbus
+LOCAL_SHARED_LIBRARIES += libdbus libcutils
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -139,3 +141,4 @@ $(LOCAL_PATH)/src/agent/otbr-agent.conf: $(LOCAL_PATH)/src/agent/otbr-agent.conf
 	sed -e 's/@OTBR_AGENT_USER@/root/g' -e 's/@OTBR_AGENT_GROUP@/root/g' $< > $@
 
 include $(BUILD_PREBUILT)
+endif # ifeq ($(OTBR_ENABLE_ANDROID_MK),1)
