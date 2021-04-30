@@ -45,6 +45,12 @@
 #include <openthread/logging.h>
 #include <openthread/platform/radio.h>
 
+#ifdef __ANDROID__
+#ifdef OPENTHREAD_ENABLE_ANDROID_PROPERTY
+#include <cutils/properties.h>
+#endif
+#endif
+
 #include "agent/agent_instance.hpp"
 #include "agent/ncp_openthread.hpp"
 #include "common/code_utils.hpp"
@@ -211,9 +217,30 @@ static void OnAllocateFailed(void)
     exit(1);
 }
 
+static otbrLogLevel GetDefaultLogLevel(void)
+{
+    otbrLogLevel level = OTBR_LOG_INFO;
+
+#ifdef __ANDROID__
+#ifdef OPENTHREAD_ENABLE_ANDROID_PROPERTY
+    char value[PROPERTY_VALUE_MAX];
+
+    if (property_get("ro.build.type", value, nullptr) > 0)
+    {
+        if (strcmp(value, "user") == 0)
+        {
+            level = OTBR_LOG_WARNING;
+        }
+    }
+#endif
+#endif
+
+    return level;
+}
+
 static int realmain(int argc, char *argv[])
 {
-    otbrLogLevel logLevel = OTBR_LOG_INFO;
+    otbrLogLevel logLevel = GetDefaultLogLevel();
     int          opt;
     int          ret                   = EXIT_SUCCESS;
     const char * interfaceName         = kDefaultInterfaceName;
