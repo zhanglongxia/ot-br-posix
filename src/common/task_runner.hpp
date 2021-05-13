@@ -73,6 +73,8 @@ public:
      */
     ~TaskRunner(void) override;
 
+    void Init(void) override {}
+
     /**
      * This method posts a task to the task runner and returns immediately.
      *

@@ -75,7 +75,7 @@ public:
      *
      *
      */
-    void Init(void);
+    void Init(void) override;
 
     /**
      * This method updates the mainloop context.

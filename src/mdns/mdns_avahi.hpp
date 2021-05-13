@@ -127,6 +127,8 @@ public:
      */
     Poller(void);
 
+    void Init(void) override {}
+
     /**
      * This method updates the mainloop context.
      *
@@ -335,6 +337,8 @@ public:
      *
      */
     void Stop(void) override;
+
+    void Init(void) override {}
 
     /**
      * This method updates the mainloop context.

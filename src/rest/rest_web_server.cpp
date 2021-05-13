@@ -43,6 +43,17 @@ using std::chrono::steady_clock;
 namespace otbr {
 namespace rest {
 
+// static OTBR_DEFINE_ALIGNED_VAR(sRestWebServerRaw, sizeof(RestWebServer), uint64_t);
+
+MainloopProcessor *RestWebServer::GetMainloopProcessor(ControllerOpenThread *aNcp)
+{
+    // MainloopProcessor *mainloopProcessor = new (&sRestWebServerRaw) RestWebServer(aNcp);
+    MainloopProcessor *mainloopProcessor = new RestWebServer(aNcp);
+
+    assert(mainloopProcessor != nullptr);
+    return mainloopProcessor;
+}
+
 // Maximum number of connection a server support at the same time.
 static const uint32_t kMaxServeNum = 500;
 // Port number used by Rest server.
@@ -64,9 +75,10 @@ RestWebServer::~RestWebServer(void)
 
 RestWebServer *RestWebServer::GetRestWebServer(ControllerOpenThread *aNcp)
 {
-    static RestWebServer *sServer = new RestWebServer(aNcp);
+    (void)(aNcp);
+    // static RestWebServer *sServer = new RestWebServer(aNcp);
 
-    return sServer;
+    return NULL; // sServer;
 }
 
 void RestWebServer::Init(void)

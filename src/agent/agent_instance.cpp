@@ -48,17 +48,10 @@ AgentInstance::AgentInstance(Ncp::ControllerOpenThread &aNcp)
 {
 }
 
-otbrError AgentInstance::Init(void)
+void AgentInstance::Init(void)
 {
-    otbrError error = OTBR_ERROR_NONE;
-
-    SuccessOrExit(error = mNcp.Init());
-
+    mNcp.Init();
     mBorderAgent.Init();
-
-exit:
-    otbrLogResult(error, "Initialize OpenThread Border Router Agent");
-    return error;
 }
 
 void AgentInstance::Update(MainloopContext &aMainloop)

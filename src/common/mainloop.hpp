@@ -38,6 +38,8 @@
 
 #include <openthread/openthread-system.h>
 
+#include "common/types.hpp"
+
 namespace otbr {
 
 /**
@@ -56,6 +58,12 @@ class MainloopProcessor
 {
 public:
     virtual ~MainloopProcessor(void) = default;
+
+    /**
+     * This method initializes the mainloop processor.
+     *
+     */
+    virtual void Init(void) = 0;
 
     /**
      * This method updates the mainloop context.

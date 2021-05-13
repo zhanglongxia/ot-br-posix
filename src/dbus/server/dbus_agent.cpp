@@ -28,6 +28,8 @@
 
 #define OTBR_LOG_TAG "DBUS"
 
+#include <assert.h>
+
 #include "dbus/server/dbus_agent.hpp"
 
 #include "common/logging.hpp"
@@ -38,13 +40,32 @@ namespace DBus {
 
 const struct timeval DBusAgent::kPollTimeout = {0, 0};
 
+#if 0
 DBusAgent::DBusAgent(const std::string &aInterfaceName, otbr::Ncp::ControllerOpenThread *aNcp)
     : mInterfaceName(aInterfaceName)
     , mNcp(aNcp)
 {
 }
+#endif
 
-otbrError DBusAgent::Init(void)
+// static OTBR_DEFINE_ALIGNED_VAR(sDbusAgentRaw, sizeof(DBusAgent), uint64_t);
+
+MainloopProcessor *DBusAgent::GetMainloopProcessor(otbr::Ncp::ControllerOpenThread *aNcp)
+{
+    // MainloopProcessor *mainloopProcessor = new (&sDbusAgentRaw) DBusAgent(aNcp);
+    MainloopProcessor *mainloopProcessor = new DBusAgent(aNcp);
+
+    assert(mainloopProcessor != nullptr);
+    return mainloopProcessor;
+}
+
+DBusAgent::DBusAgent(otbr::Ncp::ControllerOpenThread *aNcp)
+    : mInterfaceName(aNcp->GetInterfaceName())
+    , mNcp(aNcp)
+{
+}
+
+void DBusAgent::Init(void)
 {
     DBusError   dbusError;
     otbrError   error = OTBR_ERROR_NONE;
@@ -67,12 +88,12 @@ otbrError DBusAgent::Init(void)
     mThreadObject = std::unique_ptr<DBusThreadObject>(new DBusThreadObject(mConnection.get(), mInterfaceName, mNcp));
     error         = mThreadObject->Init();
 exit:
+    dbus_error_free(&dbusError);
     if (error != OTBR_ERROR_NONE)
     {
         otbrLogErr("Dbus error %s: %s", dbusError.name, dbusError.message);
+        exit(EXIT_FAILURE);
     }
-    dbus_error_free(&dbusError);
-    return error;
 }
 
 dbus_bool_t DBusAgent::AddDBusWatch(struct DBusWatch *aWatch, void *aContext)

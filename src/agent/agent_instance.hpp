@@ -66,11 +66,8 @@ public:
     /**
      * This method initialize the agent.
      *
-     * @retval  OTBR_ERROR_NONE     Agent initialized successfully.
-     * @retval  OTBR_ERROR_ERRNO    Failed due to error indicated in errno.
-     *
      */
-    otbrError Init(void);
+    void Init(void) override;
 
     /**
      * This method updates the mainloop context.
