@@ -44,7 +44,9 @@
 #include <openthread/netdiag.h>
 #include <openthread/udp.h>
 
+#include "agent/ncp_openthread.hpp"
 #include "common/code_utils.hpp"
+#include "common/mainloop.hpp"
 
 extern "C" {
 #include <libubox/blobmsg_json.h>
@@ -1118,6 +1120,44 @@ private:
      *
      */
     void AppendResult(otError aError, struct ubus_context *aContext, struct ubus_request_data *aRequest);
+};
+
+class UBusAgent : public MainloopProcessor
+{
+public:
+    UBusAgent(otbr::Ncp::ControllerOpenThread *aNcp)
+        : mNcp(aNcp)
+    {
+    }
+
+    static MainloopProcessor *GetMainloopProcessor(void *aContext);
+
+    static void UbusServerRun(void) { otbr::ubus::UbusServer::GetInstance().InstallUbusObject(); }
+
+    /**
+     * This method initializes the dbus agent.
+     *
+     */
+    otbrError Init(void) override;
+
+    /**
+     * This method updates the mainloop context.
+     *
+     * @param[inout]  aMainloop  A reference to the mainloop to be updated.
+     *
+     */
+    void Update(MainloopContext &aMainloop) override;
+
+    /**
+     * This method processes mainloop events.
+     *
+     * @param[in]  aMainloop  A reference to the mainloop context.
+     *
+     */
+    void Process(const MainloopContext &aMainloop) override;
+
+private:
+    otbr::Ncp::ControllerOpenThread *mNcp;
 };
 } // namespace ubus
 } // namespace otbr

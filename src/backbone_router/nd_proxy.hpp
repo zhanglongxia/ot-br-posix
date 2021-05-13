@@ -89,7 +89,7 @@ public:
      * This method initializes a ND Proxy manager instance.
      *
      */
-    void Init(void);
+    otbrError Init(void) override;
 
     /**
      * This method enables the ND Proxy manager.

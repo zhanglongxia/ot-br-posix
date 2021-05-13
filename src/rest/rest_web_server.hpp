@@ -64,6 +64,8 @@ public:
      */
     static RestWebServer *GetRestWebServer(ControllerOpenThread *aNcp);
 
+    static MainloopProcessor *GetMainloopProcessor(void *aContext);
+
     /**
      * The destructor destroys the server instance.
      *
@@ -74,7 +76,7 @@ public:
      * This method initializes the REST server.
      *
      */
-    void Init(void);
+    otbrError Init(void) override;
 
     /**
      * This method updates the mainloop context.

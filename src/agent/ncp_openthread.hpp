@@ -75,7 +75,7 @@ public:
      * @retval  OTBR_ERROR_NONE     Successfully initialized NCP controller.
      *
      */
-    otbrError Init(void);
+    otbrError Init(void) override;
 
     /**
      * This method get mInstance pointer.
@@ -141,6 +141,8 @@ public:
      *
      */
     static const char *GetThreadVersion(void);
+
+    const char *GetInterfaceName(void) { return mConfig.mInterfaceName; }
 
     ~ControllerOpenThread(void) override;
 

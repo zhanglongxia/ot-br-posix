@@ -112,10 +112,11 @@ exit:
     otbrLogResult(error, "NdProxyManager: %s", __FUNCTION__);
 }
 
-void NdProxyManager::Init(void)
+otbrError NdProxyManager::Init(void)
 {
     mBackboneIfIndex = if_nametoindex(InstanceParams::Get().GetBackboneIfName());
     VerifyOrDie(mBackboneIfIndex > 0, "if_nametoindex failed");
+    return OTBR_ERROR_NONE;
 }
 
 void NdProxyManager::Update(MainloopContext &aMainloop)

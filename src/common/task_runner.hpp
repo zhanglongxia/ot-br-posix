@@ -73,6 +73,8 @@ public:
      */
     ~TaskRunner(void) override;
 
+    otbrError Init(void) override { return OTBR_ERROR_NONE; }
+
     /**
      * This method posts a task to the task runner and returns immediately.
      *

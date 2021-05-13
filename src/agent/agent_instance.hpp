@@ -70,7 +70,7 @@ public:
      * @retval  OTBR_ERROR_ERRNO    Failed due to error indicated in errno.
      *
      */
-    otbrError Init(void);
+    otbrError Init(void) override;
 
     /**
      * This method updates the mainloop context.

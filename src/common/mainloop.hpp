@@ -38,6 +38,10 @@
 
 #include <openthread/openthread-system.h>
 
+#include <list>
+
+#include "common/types.hpp"
+
 namespace otbr {
 
 /**
@@ -57,6 +61,8 @@ class MainloopProcessor
 public:
     virtual ~MainloopProcessor(void) = default;
 
+    virtual otbrError Init(void) = 0;
+
     /**
      * This method updates the mainloop context.
      *
@@ -74,6 +80,54 @@ public:
     virtual void Process(const MainloopContext &aMainloop) = 0;
 };
 
+class MainloopManager
+{
+public:
+    typedef MainloopProcessor *(*MainloopProcessorCallback)(void *aContext);
+
+    MainloopManager(MainloopProcessorCallback *aFunctions, uint8_t aNumCallbacks)
+        : mCallbacks(aFunctions)
+        , mNumCallbacks(aNumCallbacks)
+        , mList()
+    {
+    }
+
+    void Init(void *aContext)
+    {
+        MainloopProcessor *processor;
+
+        for (int i = 0; i < mNumCallbacks; i++)
+        {
+            processor = mCallbacks[i](aContext);
+            processor->Init();
+            Add(processor);
+        }
+    }
+
+    // void Add(MainloopProcessor *aProcessor) { mList.emplace_back(aProcessor); }
+    void Add(MainloopProcessor *aProcessor) { mList.push_back(aProcessor); }
+
+    void Update(MainloopContext &aMainloop)
+    {
+        for (std::list<MainloopProcessor *>::iterator it = mList.begin(); it != mList.end(); ++it)
+        {
+            (*it)->Update(aMainloop);
+        }
+    }
+
+    void Process(const MainloopContext &aMainloop)
+    {
+        for (std::list<MainloopProcessor *>::iterator it = mList.begin(); it != mList.end(); ++it)
+        {
+            (*it)->Process(aMainloop);
+        }
+    }
+
+private:
+    MainloopProcessorCallback *    mCallbacks;
+    uint8_t                        mNumCallbacks;
+    std::list<MainloopProcessor *> mList;
+};
 } // namespace otbr
 
 #endif // OTBR_COMMON_OTBR_MAINLOOP_HPP_

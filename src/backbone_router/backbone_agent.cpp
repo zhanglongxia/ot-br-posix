@@ -54,7 +54,7 @@ BackboneAgent::BackboneAgent(otbr::Ncp::ControllerOpenThread &aNcp)
 {
 }
 
-void BackboneAgent::Init(void)
+otbrError BackboneAgent::Init(void)
 {
     mNcp.AddThreadStateChangedCallback([this](otChangedFlags aFlags) { HandleThreadStateChanged(aFlags); });
     otBackboneRouterSetDomainPrefixCallback(mNcp.GetInstance(), &BackboneAgent::HandleBackboneRouterDomainPrefixEvent,
@@ -65,6 +65,8 @@ void BackboneAgent::Init(void)
 #endif
 
     otBackboneRouterSetEnabled(mNcp.GetInstance(), /* aEnabled */ true);
+
+    return OTBR_ERROR_NONE;
 }
 
 void BackboneAgent::HandleThreadStateChanged(otChangedFlags aFlags)

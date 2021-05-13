@@ -207,6 +207,8 @@ public:
      */
     void Stop(void) override;
 
+    otbrError Init(void) override { return OTBR_ERROR_NONE; }
+
     /**
      * This method updates the mainloop context.
      *

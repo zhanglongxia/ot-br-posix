@@ -27,9 +27,11 @@
  */
 
 #define OTBR_LOG_TAG "DBUS"
+#include <assert.h>
 
 #include "dbus/server/dbus_agent.hpp"
 
+#include "agent/instance_params.hpp"
 #include "common/logging.hpp"
 #include "dbus/common/constants.hpp"
 
@@ -38,8 +40,19 @@ namespace DBus {
 
 const struct timeval DBusAgent::kPollTimeout = {0, 0};
 
-DBusAgent::DBusAgent(const std::string &aInterfaceName, otbr::Ncp::ControllerOpenThread *aNcp)
-    : mInterfaceName(aInterfaceName)
+static OTBR_DEFINE_ALIGNED_VAR(sDbusAgentRaw, sizeof(DBusAgent), uint64_t);
+
+MainloopProcessor *DBusAgent::GetMainloopProcessor(void *aContext)
+{
+    MainloopProcessor *mainloopProcessor =
+        new (&sDbusAgentRaw) DBusAgent(reinterpret_cast<otbr::Ncp::ControllerOpenThread *>(aContext));
+
+    assert(mainloopProcessor != nullptr);
+    return mainloopProcessor;
+}
+
+DBusAgent::DBusAgent(otbr::Ncp::ControllerOpenThread *aNcp)
+    : mInterfaceName(InstanceParams::Get().GetThreadIfName())
     , mNcp(aNcp)
 {
 }

@@ -37,6 +37,7 @@
 #include <mutex>
 
 #include <arpa/inet.h>
+#include <assert.h>
 #include <sys/eventfd.h>
 
 #include <openthread/commissioner.h>
@@ -1786,6 +1787,89 @@ exit:
     return rval;
 }
 
+static std::mutex sThreadMutex;
+
+static OTBR_DEFINE_ALIGNED_VAR(sUBusAgentRaw, sizeof(UBusAgent), uint64_t);
+
+MainloopProcessor *UBusAgent::GetMainloopProcessor(void *aContext)
+{
+    MainloopProcessor *mainloopProcessor =
+        new (&sUBusAgentRaw) UBusAgent(reinterpret_cast<otbr::Ncp::ControllerOpenThread *>(aContext));
+    // MainloopProcessor *mainloopProcessor = new UBusAgent(aNcp);
+
+    assert(mainloopProcessor != nullptr);
+
+    return mainloopProcessor;
+}
+
+otbrError UBusAgent::Init(void)
+{
+    otbr::ubus::sNcpThreadMutex = &sThreadMutex;
+    otbr::ubus::sUbusEfd        = eventfd(0, 0);
+
+    otbr::ubus::UbusServer::Initialize(mNcp);
+
+    if (otbr::ubus::sUbusEfd == -1)
+    {
+        perror("Failed to create eventfd for ubus");
+        exit(EXIT_FAILURE);
+    }
+
+    std::thread(UbusServerRun).detach();
+
+    return OTBR_ERROR_NONE;
+}
+
+/**
+ * This method updates the mainloop context.
+ *
+ * @param[inout]  aMainloop  A reference to the mainloop to be updated.
+ *
+ */
+void UBusAgent::Update(MainloopContext &aMainloop)
+{
+    VerifyOrExit(otbr::ubus::sUbusEfd != -1);
+
+    FD_SET(otbr::ubus::sUbusEfd, &aMainloop.mReadFdSet);
+
+    if (aMainloop.mMaxFd < otbr::ubus::sUbusEfd)
+    {
+        aMainloop.mMaxFd = otbr::ubus::sUbusEfd;
+    }
+
+exit:
+    sThreadMutex.unlock();
+    return;
+}
+
+/**
+ * This method processes mainloop events.
+ *
+ * @param[in]  aMainloop  A reference to the mainloop context.
+ *
+ */
+void UBusAgent::Process(const MainloopContext &aMainloop)
+{
+    ssize_t  retval;
+    uint64_t num;
+
+    sThreadMutex.lock();
+
+    VerifyOrExit(otbr::ubus::sUbusEfd != -1);
+
+    if (FD_ISSET(otbr::ubus::sUbusEfd, &aMainloop.mReadFdSet))
+    {
+        retval = read(otbr::ubus::sUbusEfd, &num, sizeof(uint64_t));
+        if (retval != sizeof(uint64_t))
+        {
+            perror("read ubus eventfd failed\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+exit:
+    return;
+}
 } // namespace ubus
 } // namespace otbr
 

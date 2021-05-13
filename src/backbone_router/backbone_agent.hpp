@@ -75,7 +75,7 @@ public:
      * This method initializes the Backbone agent.
      *
      */
-    void Init(void);
+    otbrError Init(void) override;
 
     /**
      * This method updates the mainloop context.

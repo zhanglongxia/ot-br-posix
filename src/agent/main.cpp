@@ -59,14 +59,23 @@ using otbr::rest::RestWebServer;
 #include "dbus/server/dbus_agent.hpp"
 using otbr::DBus::DBusAgent;
 #endif
-using otbr::Ncp::ControllerOpenThread;
-
 #if OTBR_ENABLE_OPENWRT
-extern void       UbusUpdateFdSet(fd_set &aReadFdSet, int &aMaxFd);
-extern void       UbusProcess(const fd_set &aReadFdSet);
-extern void       UbusServerRun(void);
-extern void       UbusServerInit(otbr::Ncp::ControllerOpenThread *aController, std::mutex *aNcpThreadMutex);
-static std::mutex sThreadMutex;
+#include "openwrt/ubus/otubus.hpp"
+#endif
+
+using otbr::Ncp::ControllerOpenThread;
+#if 1
+static otbr::MainloopManager::MainloopProcessorCallback sCallbacks[] = {
+#if OTBR_ENABLE_OPENWRT
+    otbr::ubus::UBusAgent::GetMainloopProcessor,
+#endif
+#if OTBR_ENABLE_REST_SERVER
+    otbr::rest::RestWebServer::GetMainloopProcessor,
+#endif
+#if OTBR_ENABLE_DBUS_SERVER
+// otbr::DBus::DBusAgent::GetMainloopProcessor,
+#endif
+};
 #endif
 
 static const char kSyslogIdent[]          = "otbr-agent";
@@ -113,17 +122,33 @@ static int Mainloop(otbr::AgentInstance &aInstance, const char *aInterfaceName)
     ControllerOpenThread &ncpOpenThread = static_cast<ControllerOpenThread &>(aInstance.GetNcp());
 
     OT_UNUSED_VARIABLE(ncpOpenThread);
+    OT_UNUSED_VARIABLE(aInterfaceName);
+
+    otbr::MainloopManager mainloopManager(sCallbacks, OTBR_ARRAY_LENGTH(sCallbacks));
+    mainloopManager.Init(&ncpOpenThread);
+    // otbr::MainloopManager mainloopManager(NULL, 0);
+
+#if OTBR_ENABLE_OPENWRT
+    // otbr::MainloopProcessor *ubus = otbr::ubus::UBusAgent::GetMainloopProcessor(&ncpOpenThread);
+    // ubus->Init();
+    // otbr::MainloopProcessor *ubus = otbr::ubus::UBusAgent::GetMainloopProcessor(&ncpOpenThread);
+    // ubus->Init();
+    // mainloopManager.Add(ubus);
+#endif
+
+#if OTBR_ENABLE_REST_SERVER
+    // tbr::MainloopProcessor *restServer = otbr::rest::RestWebServer::GetMainloopProcessor(&aInstance.GetNcp());
+    // restServer->Init();
+#endif
 
 #if OTBR_ENABLE_DBUS_SERVER
-    std::unique_ptr<DBusAgent> dbusAgent = std::unique_ptr<DBusAgent>(new DBusAgent(aInterfaceName, &ncpOpenThread));
+    otbr::MainloopProcessor *dbusAgent = otbr::DBus::DBusAgent::GetMainloopProcessor(&ncpOpenThread);
     dbusAgent->Init();
+    mainloopManager.Add(dbusAgent);
 #else
     OTBR_UNUSED_VARIABLE(aInterfaceName);
 #endif
-#if OTBR_ENABLE_REST_SERVER
-    RestWebServer *restServer = RestWebServer::GetRestWebServer(&ncpOpenThread);
-    restServer->Init();
-#endif
+
     otbrLogInfo("Border router agent started.");
     // allow quitting elegantly
     signal(SIGTERM, HandleSignal);
@@ -142,17 +167,18 @@ static int Mainloop(otbr::AgentInstance &aInstance, const char *aInterfaceName)
 
         aInstance.Update(mainloop);
 
-#if OTBR_ENABLE_DBUS_SERVER
-        dbusAgent->Update(mainloop);
+        mainloopManager.Update(mainloop);
+
+#if OTBR_ENABLE_OPENWRT
+        // ubus->Update(mainloop);
 #endif
 
 #if OTBR_ENABLE_REST_SERVER
-        restServer->Update(mainloop);
+        // restServer->Update(mainloop);
 #endif
 
-#if OTBR_ENABLE_OPENWRT
-        UbusUpdateFdSet(mainloop.mReadFdSet, mainloop.mMaxFd);
-        sThreadMutex.unlock();
+#if OTBR_ENABLE_DBUS_SERVER
+        // dbusAgent->Update(mainloop);
 #endif
 
         rval = select(mainloop.mMaxFd + 1, &mainloop.mReadFdSet, &mainloop.mWriteFdSet, &mainloop.mErrorFdSet,
@@ -160,26 +186,24 @@ static int Mainloop(otbr::AgentInstance &aInstance, const char *aInterfaceName)
 
         if (rval >= 0)
         {
+            aInstance.Process(mainloop);
+
+            mainloopManager.Process(mainloop);
+
 #if OTBR_ENABLE_OPENWRT
-            sThreadMutex.lock();
-            UbusProcess(mainloop.mReadFdSet);
+            // ubus->Process(mainloop);
 #endif
 
 #if OTBR_ENABLE_REST_SERVER
-            restServer->Process(mainloop);
+            // restServer->Process(mainloop);
 #endif
 
-            aInstance.Process(mainloop);
-
 #if OTBR_ENABLE_DBUS_SERVER
-            dbusAgent->Process(mainloop);
+            // dbusAgent->Process(mainloop);
 #endif
         }
         else if (errno != EINTR)
         {
-#if OTBR_ENABLE_OPENWRT
-            sThreadMutex.lock();
-#endif
             error = OTBR_ERROR_ERRNO;
             otbrLogErr("select() failed: %s", strerror(errno));
             break;
@@ -288,10 +312,6 @@ static int realmain(int argc, char *argv[])
             ExitNow(ret = EXIT_SUCCESS);
         }
 
-#if OTBR_ENABLE_OPENWRT
-        UbusServerInit(&ncpOpenThread, &sThreadMutex);
-        std::thread(UbusServerRun).detach();
-#endif
         SuccessOrExit(ret = Mainloop(instance, interfaceName));
     }
 

@@ -75,7 +75,7 @@ public:
      *
      *
      */
-    void Init(void);
+    otbrError Init(void) override;
 
     /**
      * This method updates the mainloop context.

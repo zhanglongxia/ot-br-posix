@@ -81,7 +81,7 @@ public:
      * This method initialize border agent service.
      *
      */
-    void Init(void);
+    otbrError Init(void) override;
 
     /**
      * This method updates the mainloop context.

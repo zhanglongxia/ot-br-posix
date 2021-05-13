@@ -32,8 +32,10 @@
 
 #include <cerrno>
 
+#include <assert.h>
 #include <fcntl.h>
 
+#include "common/code_utils.hpp"
 #include "utils/socket_utils.hpp"
 
 using std::chrono::duration_cast;
@@ -42,6 +44,18 @@ using std::chrono::steady_clock;
 
 namespace otbr {
 namespace rest {
+
+static OTBR_DEFINE_ALIGNED_VAR(sRestWebServerRaw, sizeof(RestWebServer), uint64_t);
+
+MainloopProcessor *RestWebServer::GetMainloopProcessor(void *aContext)
+{
+    MainloopProcessor *mainloopProcessor =
+        new (&sRestWebServerRaw) RestWebServer(reinterpret_cast<otbr::Ncp::ControllerOpenThread *>(aContext));
+    // MainloopProcessor *mainloopProcessor = new RestWebServer(aNcp);
+
+    assert(mainloopProcessor != nullptr);
+    return mainloopProcessor;
+}
 
 // Maximum number of connection a server support at the same time.
 static const uint32_t kMaxServeNum = 500;
@@ -69,10 +83,12 @@ RestWebServer *RestWebServer::GetRestWebServer(ControllerOpenThread *aNcp)
     return sServer;
 }
 
-void RestWebServer::Init(void)
+otbrError RestWebServer::Init(void)
 {
     mResource.Init();
     InitializeListenFd();
+
+    return OTBR_ERROR_NONE;
 }
 
 void RestWebServer::Update(MainloopContext &aMainloop)

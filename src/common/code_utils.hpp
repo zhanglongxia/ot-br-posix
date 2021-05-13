@@ -155,4 +155,17 @@
 #define OTBR_NOOP
 #define OTBR_UNUSED_VARIABLE(variable) ((void)(variable))
 
+// Allocate the structure using "raw" storage.
+#define OTBR_DEFINE_ALIGNED_VAR(name, size, align_type) \
+    align_type name[(((size) + (sizeof(align_type) - 1)) / sizeof(align_type))]
+
+/**
+ * This macro calculates the number of elements in an array.
+ *
+ * @param[in] aArray  Name of the array variable.
+ *
+ * @returns Number of elements in the array.
+ *
+ */
+#define OTBR_ARRAY_LENGTH(aArray) (sizeof(aArray) / sizeof(aArray[0]))
 #endif // OTBR_COMMON_CODE_UTILS_HPP_

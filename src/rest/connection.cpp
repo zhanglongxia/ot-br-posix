@@ -69,9 +69,11 @@ Connection::~Connection(void)
     Disconnect();
 }
 
-void Connection::Init(void)
+otbrError Connection::Init(void)
 {
     mParser.Init();
+
+    return OTBR_ERROR_NONE;
 }
 
 void Connection::UpdateReadFdSet(fd_set &aReadFdSet, int &aMaxFd) const

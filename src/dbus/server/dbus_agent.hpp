@@ -56,11 +56,12 @@ public:
     /**
      * The constructor of dbus agent.
      *
-     * @param[in]       aInterfaceName  The interface name.
-     * @param[in]       aNcp            The ncp controller.
+     * @param[in]  aNcp  The ncp controller.
      *
      */
-    DBusAgent(const std::string &aInterfaceName, otbr::Ncp::ControllerOpenThread *aNcp);
+    DBusAgent(otbr::Ncp::ControllerOpenThread *aNcp);
+
+    static MainloopProcessor *GetMainloopProcessor(void *aContext);
 
     /**
      * This method initializes the dbus agent.
@@ -68,7 +69,7 @@ public:
      * @returns The intialization error.
      *
      */
-    otbrError Init(void);
+    otbrError Init(void) override;
 
     /**
      * This method updates the mainloop context.

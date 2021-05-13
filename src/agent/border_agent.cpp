@@ -107,7 +107,7 @@ BorderAgent::BorderAgent(otbr::Ncp::ControllerOpenThread &aNcp)
 {
 }
 
-void BorderAgent::Init(void)
+otbrError BorderAgent::Init(void)
 {
     mNcp.AddThreadStateChangedCallback([this](otChangedFlags aFlags) { HandleThreadStateChanged(aFlags); });
 
@@ -123,6 +123,8 @@ void BorderAgent::Init(void)
     {
         Stop();
     }
+
+    return OTBR_ERROR_NONE;
 }
 
 otbrError BorderAgent::Start(void)
