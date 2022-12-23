@@ -108,6 +108,9 @@ endif()
 
 
 add_subdirectory(third_party EXCLUDE_FROM_ALL)
+target_compile_definitions(ot-config INTERFACE
+    OTBR_ENABLE=1
+)
 add_subdirectory(src)
 add_subdirectory(tools)
 
